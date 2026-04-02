@@ -1,6 +1,5 @@
 <div align="center">
 
-<!-- HEADER BANNER -->
 <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=Anemia%20Detection%20via%20CBC&fontSize=42&fontColor=fff&animation=twinkling&fontAlignY=38&desc=Machine%20Learning%20on%20Complete%20Blood%20Count%20Parameters&descAlignY=56&descSize=16" width="100%"/>
 
 <br/>
@@ -13,11 +12,11 @@
 
 <br/>
 
-> **A clinical-grade machine learning pipeline to detect anemia from routine blood test parameters — with special emphasis on maximizing Recall to minimize missed diagnoses.**
+> **A clinical-grade machine learning pipeline to detect anemia from routine CBC blood test parameters — with Yeo-Johnson power transformation, IQR-based outlier removal, statistical significance testing, and an XGBoost model achieving perfect recall.**
 
 <br/>
 
-[🔍 Explore the Notebook](#-project-structure) · [📊 See Results](#-model-performance) · [🚀 Run Locally](#-getting-started) · [🩸 About the Problem](#-problem-statement)
+[🔍 Explore the Notebook](#-project-structure) · [📊 See Results](#-model-performance) · [🚀 Run Locally](#-getting-started) · [🧪 Predict on a Patient](#-predict-on-a-new-patient)
 
 <br/>
 </div>
@@ -26,13 +25,7 @@
 
 ## 🩸 Problem Statement
 
-Anemia is one of the most common and globally prevalent blood disorders, affecting over **1.6 billion people** worldwide. Early detection is critical — especially in children and pregnant women — yet it is frequently missed in routine screenings.
-
-This project builds a **binary classification pipeline** on real Complete Blood Count (CBC) data to:
-
-- Automatically flag anemic patients from standard lab results
-- **Maximize Recall** — because a missed anemia diagnosis (False Negative) carries clinical risk
-- Provide interpretable feature importance for medical trust and explainability
+Anemia affects over **1.6 billion people** worldwide and is frequently missed in routine screenings. This project builds a binary classification pipeline on real Complete Blood Count (CBC) data to automatically flag anemic patients — with a laser focus on **maximizing Recall**, because a missed diagnosis (False Negative) is a clinical risk.
 
 **Anemia is defined as:**
 ```
@@ -47,18 +40,13 @@ Anaemia = 0  otherwise
 ```
 anemia-detection-cbc-ml/
 │
-├── 📓 Project_7_Anemia_Detection.ipynb   # Main notebook (all parts)
-│
+├── 📓 Project_7_Anemia_Detection.ipynb     # Full pipeline — all 9 parts
 ├── 📊 data/
-│   ├── cbc_raw.csv                       # Original Kaggle dataset
-│   └── cbc_anaemia_clean.csv             # Cleaned dataset (output)
-│
+│   ├── cbc_raw.xlsx                         # Original Kaggle dataset
+│   └── dataset.json                         # Cleaned dataset (output)
 ├── 🤖 models/
-│   ├── anaemia_model.pkl                 # Final saved model
-│   └── scaler.pkl                        # Fitted StandardScaler
-│
-├── 📈 plots/                             # All generated visualizations
-│
+│   ├── anaemia_model.pkl                    # Final saved XGBoost model
+│   └── scaler.pkl                           # Fitted StandardScaler
 └── 📄 README.md
 ```
 
@@ -68,102 +56,151 @@ anemia-detection-cbc-ml/
 
 | Property | Detail |
 |---|---|
-| **Source** | [Kaggle – CBC Test Dataset](https://www.kaggle.com/datasets/ahmedelsayedtaha/complete-blood-count-cbc-test/data) |
-| **Features** | 20 CBC parameters (WBC, RBC, HGB, HCT, MCV, MCH, MCHC, PLT, etc.) |
-| **Target** | `Anaemia` — binary (1 = Anemic, 0 = Not Anemic) |
-| **Label Source** | Derived from clinical HGB/HCT thresholds |
+| **Source** | [Kaggle – Complete Blood Count CBC Test](https://www.kaggle.com/datasets/ahmedelsayedtaha/complete-blood-count-cbc-test/data) |
+| **Raw shape** | 500 rows × 21 columns |
+| **After cleaning** | 361 rows × 21 columns (139 outlier rows removed) |
+| **Features** | 20 CBC parameters |
+| **Target** | `Target` — binary (1 = Anemic, 0 = Not Anemic) |
+| **Missing values** | ✅ None — dataset is fully complete |
+| **Duplicates** | ✅ None |
 
 ### CBC Feature Reference
 
-| Feature | Description |
-|---|---|
-| `WBC` | White Blood Cell count |
-| `RBC` | Red Blood Cell count |
-| `HGB` | Hemoglobin — *primary anemia indicator* |
-| `HCT` | Hematocrit — *primary anemia indicator* |
-| `MCV` | Mean Corpuscular Volume |
-| `MCH` / `MCHC` | Mean Corpuscular Hemoglobin (Concentration) |
-| `RDWSD` / `RDWCV` | Red cell Distribution Width |
-| `PLT` | Platelet count |
-| `MPV` / `PDW` / `PCT` / `PLCR` | Platelet morphology indices |
-
----
-
-## 🔬 Project Workflow
-
-```
-Raw CBC Data
-     │
-     ▼
-Part 1: EDA ──────────── shape, types, missing values, descriptive stats
-     │
-     ▼
-Part 2: Target Creation ─ Anaemia = f(HGB, HCT)
-     │
-     ▼
-Part 3: Deep EDA ─────── distributions, outlier analysis, t-tests,
-     │                    Pearson / Spearman / Point-Biserial correlations
-     ▼
-Part 4: Preprocessing ── imputation, train-test split, StandardScaler
-     │
-     ▼
-Part 5: Model Training ── 5 classifiers trained and evaluated
-     │
-     ▼
-Part 6: Threshold Tuning ─ ROC curves, threshold sweep for max Recall
-     │
-     ▼
-Part 7: Best Model ──────── comparison table, feature importance,
-     │                       reduced feature model
-     ▼
-Part 8: Persistence ─────── save cleaned CSV, model .pkl, scaler .pkl
-     │
-     ▼
-Part 9: Inference ───────── load model, predict on a new patient sample
-```
-
----
-
-## 🤖 Models Trained
-
-| # | Model | Notes |
+| Feature | Full Name | Role |
 |---|---|---|
-| 1 | **Logistic Regression** | Baseline linear model, interpretable coefficients |
-| 2 | **Decision Tree** | Interpretable, prone to overfit without pruning |
-| 3 | **Random Forest** | Ensemble, handles class imbalance well |
-| 4 | **XGBoost** | Gradient boosting, strong performer on tabular data |
-| 5 | **K-Nearest Neighbors** | Distance-based, sensitive to scaling |
+| `HGB` | Hemoglobin | 🔴 Primary anemia indicator |
+| `HCT` | Hematocrit | 🔴 Primary anemia indicator |
+| `RBC` | Red Blood Cell Count | 🟠 Highly significant |
+| `MCV` | Mean Corpuscular Volume | 🟠 Highly significant |
+| `MCH` | Mean Corpuscular Hemoglobin | 🟠 Highly significant |
+| `MCHC` | Mean Corpuscular Hemoglobin Concentration | 🟠 Highly significant |
+| `RDWSD` / `RDWCV` | Red Cell Distribution Width | 🟡 Significant |
+| `WBC`, `PLT`, `MPV`, etc. | White cells & platelet indices | ⚪ Not significant |
 
 ---
 
-## 📊 Model Performance
+## 🔬 Full Pipeline
 
-> All models evaluated on held-out test set (20% stratified split).  
-> **Primary metric: Recall** — minimizing False Negatives is the clinical priority.
-
-| Model | Accuracy | Precision | Recall | F1 | MCC | ROC-AUC |
-|---|---|---|---|---|---|---|
-| Logistic Regression | — | — | — | — | — | — |
-| Decision Tree | — | — | — | — | — | — |
-| Random Forest | — | — | — | — | — | — |
-| **XGBoost** | — | — | — | — | — | — |
-| KNN | — | — | — | — | — | — |
-
-> 📌 *Results populate after running the notebook with the dataset.*
-
----
-
-## ⚙️ Threshold Tuning
-
-Default classifiers use a **0.5 probability threshold**. In medical diagnosis, this is often too conservative — we'd rather over-flag than miss a patient.
-
-This project includes a **threshold sweep** (0.1 → 0.9) that plots Recall vs. Precision and selects an optimal cutoff:
-
-```python
-# Example interpretation:
-"We choose threshold 0.35 because it gives Recall of 0.96 (only 4 FN),
-which is critical for clinical safety even though Precision drops to 0.78."
 ```
+Raw CBC Data (500 × 21)
+        │
+        ▼
+Part 1: EDA ──────────── shape, dtypes, zero missing values, describe()
+        │
+        ▼
+Part 2: Target Creation ─ Anaemia = f(HGB < 11 OR HCT < 36)
+        │                  271 non-anemic (54.2%) | 229 anemic (45.8%)
+        ▼
+Part 3: Deep EDA ─────── histograms + KDE, skewness, kurtosis,
+        │                  boxplots by class, t-tests, correlation heatmap
+        ▼
+Part 4: Preprocessing ── Yeo-Johnson power transform (handles skew better than log1p),
+        │                  IQR outlier removal → 361 clean rows,
+        │                  train-test split (80/20, stratified), StandardScaler
+        ▼
+Part 5: Model Training ── 5 classifiers trained & evaluated
+        │
+        ▼
+Part 6: ROC Curves ─────── AUC comparison across top models
+        │
+        ▼
+Part 7: Feature Selection ─ XGBoost importances → top 5 features selected
+        │                    Reduced model retrained → same perfect metrics
+        ▼
+Part 8: Persistence ────── model + scaler saved as .pkl / dataset as .json
+        │
+        ▼
+Part 9: Inference ──────── load → predict on new patient sample
+```
+
+---
+
+## 📊 Class Distribution
+
+After creating the target label from clinical thresholds:
+
+| Class | Count | Percentage |
+|---|---|---|
+| 0 — Not Anemic | 271 | 54.2% |
+| 1 — Anemic | 229 | 45.8% |
+
+> The dataset is **nearly balanced** — no SMOTE or class-weight adjustment was required.
+> After outlier removal, the training split shifts to **64% / 36%** in the cleaned dataset.
+
+---
+
+## 🧪 Statistical Analysis
+
+### T-Test Results (feature vs. anemia target)
+
+| Feature | P-Value | Significant? |
+|---|---|---|
+| Hemoglobin | 7.14e-71 | ✅ Yes |
+| Hematocrit | 1.42e-76 | ✅ Yes |
+| Red Blood Cell Count | 1.70e-41 | ✅ Yes |
+| Mean Corpuscular Hemoglobin | 2.27e-27 | ✅ Yes |
+| MCHC | 1.86e-23 | ✅ Yes |
+| Mean Corpuscular Volume | 1.30e-17 | ✅ Yes |
+| RDW Coefficient of Variation | 3.63e-06 | ✅ Yes |
+| RDW Standard Deviation | 0.0037 | ✅ Yes |
+| WBC, Lymphocytes, Platelets, etc. | > 0.05 | ❌ No |
+
+### Point-Biserial Correlation (top features vs. target)
+
+| Feature | Correlation |
+|---|---|
+| Hematocrit | **-0.785** |
+| Hemoglobin | **-0.766** |
+| Red Blood Cell Count | **-0.631** |
+| Mean Corpuscular Hemoglobin | **-0.529** |
+| MCHC | **-0.493** |
+| Mean Corpuscular Volume | **-0.429** |
+| RDW Coefficient of Variation | **+0.241** |
+
+> Negative correlations confirm lower values → higher anemia probability, which aligns with clinical knowledge.
+
+---
+
+## 🤖 Model Performance
+
+All 5 models trained on **288 samples**, tested on **73 samples** (stratified 80/20 split, StandardScaler applied).
+
+| Model | Accuracy | Precision | Recall | F1 Score | ROC-AUC | PR-AUC |
+|---|---|---|---|---|---|---|
+| Logistic Regression | 0.9726 | 0.9615 | 0.9615 | 0.9615 | 0.9403 | 0.9992 |
+| Decision Tree | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| Random Forest | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| KNN | 0.8767 | 0.8400 | 0.8077 | 0.8235 | 0.7292 | 0.9431 |
+| **XGBoost** ⭐ | **1.0000** | **1.0000** | **1.0000** | **1.0000** | **1.0000** | **1.0000** |
+
+> **XGBoost** was selected as the final model — perfect metrics with **zero False Negatives** on the test set.
+
+---
+
+## 🏆 Feature Importance (XGBoost)
+
+XGBoost assigned nearly all predictive weight to just 5 features:
+
+| Rank | Feature | Importance |
+|---|---|---|
+| 1 | Hemoglobin | **55.97%** |
+| 2 | Hematocrit | **41.13%** |
+| 3 | MCHC | 2.23% |
+| 4 | Mean Corpuscular Volume | 0.47% |
+| 5 | Mean Corpuscular Hemoglobin | 0.20% |
+| All others | WBC, PLT, RDW, etc. | 0.00% |
+
+### Reduced Model (Top 5 Features Only)
+
+A simplified model retrained on only these 5 features achieves **identical performance**:
+
+| Metric | Full Model (20 features) | Reduced Model (5 features) |
+|---|---|---|
+| Accuracy | 1.0000 | 1.0000 |
+| Recall | 1.0000 | 1.0000 |
+| ROC-AUC | 1.0000 | 1.0000 |
+
+> ✅ **Same performance with 75% fewer features** — the reduced model is simpler, faster, and more interpretable for clinical deployment.
 
 ---
 
@@ -179,18 +216,12 @@ cd anemia-detection-cbc-ml
 ### 2. Install dependencies
 
 ```bash
-pip install -r requirements.txt
-```
-
-Or manually:
-
-```bash
 pip install pandas numpy matplotlib seaborn scikit-learn xgboost scipy joblib jupyter
 ```
 
-### 3. Download the dataset
+### 3. Get the dataset
 
-Get the CSV from [Kaggle](https://www.kaggle.com/datasets/ahmedelsayedtaha/complete-blood-count-cbc-test/data) and place it in `data/`.
+Download from [Kaggle](https://www.kaggle.com/datasets/ahmedelsayedtaha/complete-blood-count-cbc-test/data) and place in `data/`.
 
 ### 4. Run the notebook
 
@@ -209,11 +240,13 @@ import pandas as pd
 model = joblib.load('models/anaemia_model.pkl')
 scaler = joblib.load('models/scaler.pkl')
 
+# Top 5 features used by the final reduced model
 sample = pd.DataFrame({
-    'WBC': [7.5], 'RBC': [3.9], 'HGB': [10.5], 'HCT': [34.0],
-    'MCV': [88.0], 'MCH': [28.0], 'MCHC': [33.0], 'RDWCV': [14.0],
-    'PLT': [250.0], 'MPV': [9.0]
-    # ... all selected features
+    'Hemoglobin': [10.5],
+    'Hematocrit': [34.0],
+    'Mean_Corpuscular_Hemoglobin_Concentration': [33.0],
+    'Mean_Corpuscular_Volume': [88.0],
+    'Mean_Corpuscular_Hemoglobin': [28.0]
 })
 
 sample_scaled = scaler.transform(sample)
@@ -221,31 +254,35 @@ pred_class = model.predict(sample_scaled)[0]
 pred_proba = model.predict_proba(sample_scaled)[0][1]
 
 print(f"Predicted anemia status: {pred_class} ({'Anemic' if pred_class else 'Not Anemic'})")
-print(f"Probability of anemia: {pred_proba:.2f}")
+print(f"Probability of anemia  : {pred_proba:.2f}")
 ```
 
 ---
 
-## 📌 Key Findings
+## 📌 Key Findings & Insights
 
-- **HGB and HCT** are the most discriminative features (by design and confirmed via point-biserial correlation)
-- **RDWCV, MCV, MCH, MCHC** also show statistically significant differences between classes (t-test, p < 0.05)
-- The dataset exhibits **moderate class imbalance** — anemic patients are the minority class
-- **XGBoost / Random Forest** achieve the best ROC-AUC; Logistic Regression provides strong recall with calibrated thresholds
-- A **reduced model** (top 5–8 features) performs comparably to the full model — favoring interpretability
+- **Zero missing values and duplicates** in the original dataset — no imputation required
+- **Yeo-Johnson power transformation** outperformed log1p for reducing feature skewness across all CBC parameters
+- **139 outlier rows removed** via IQR method (500 → 361 rows), preserving data integrity
+- **8 out of 20 features** are statistically significant predictors of anemia (t-test p < 0.05); WBC, platelet indices, and percentage-based WBC features are not
+- **HGB and HCT dominate prediction** — XGBoost assigns 97.1% of total feature importance to these two
+- **Reduced 5-feature model** matches the full 20-feature model exactly — confirming that most CBC parameters are noise for this task
+- **Logistic Regression** also performs remarkably well (97.26% accuracy), validating the near-linear separability of the classes
 
 ---
 
 ## 🧠 Skills Demonstrated
 
-- ✅ End-to-end ML pipeline design
-- ✅ Clinical domain awareness (CBC interpretation, anemia criteria)
-- ✅ Statistical feature analysis (t-tests, Pearson, Spearman, Point-Biserial)
-- ✅ Outlier handling and imputation strategies
-- ✅ Multiple classifier comparison with proper evaluation metrics
-- ✅ ROC curve analysis and custom threshold tuning
-- ✅ Feature importance extraction and model simplification
-- ✅ Model persistence and real-world inference pattern
+| Area | Details |
+|---|---|
+| **Data Engineering** | Feature renaming, target derivation from clinical rules, IQR outlier removal |
+| **Statistical Analysis** | Independent t-tests, Pearson/Spearman/Point-Biserial correlations |
+| **Feature Engineering** | Yeo-Johnson power transform, StandardScaler, skewness/kurtosis analysis |
+| **ML Modeling** | 5 classifiers trained and rigorously compared with full metrics |
+| **Model Evaluation** | Accuracy, Precision, Recall, F1, MCC, ROC-AUC, PR-AUC, confusion matrix |
+| **Feature Selection** | XGBoost importance ranking, reduced model validation |
+| **ML Ops** | joblib model persistence, inference pipeline, clean train/test separation |
+| **Domain Awareness** | Clinical CBC interpretation, anemia thresholds, minimizing False Negatives |
 
 ---
 
